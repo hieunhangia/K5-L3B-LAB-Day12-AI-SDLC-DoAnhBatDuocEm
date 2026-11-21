@@ -19,3 +19,12 @@
 ## Đánh giá ngắn
 - Tôi đã kiểm chứng Gather Core và các đường hồi quy sẵn có; chưa kết luận về cơ chế hái/bắt cá hay nghiệp vụ quán còn TODO.
 - Tôi bàn giao helper giỏ và bằng chứng tái chạy cho TV3. Nhóm cần điền đủ TEAM.md, tích hợp lát 2 rồi kiểm chứng lại trước khi gắn tag phase-1.
+
+## Kiểm chứng lại của TV6
+
+| AC | Cách kiểm chứng | Bằng chứng | Kết quả |
+|---|---|---|---|
+| Hái bông và bắt cá từ giỏ rỗng, chuyển kho sang quán | Headless gather chạy đến hết giờ, rồi headless quan dùng `--inventory` | [Gather](../proof/phase-1/member-6/gather_run.jsonl), [kho](../proof/phase-1/member-6/inventory.json), [snapshot quán](../proof/phase-1/member-6/quan_run.jsonl) | Đạt. Quán nhận đúng 1 bông điên điển và 3 cá linh. |
+| Kịch bản quán mâu thuẫn trả mã 2 | `QuanScenario` kiểm món, đơn, giữ chỗ suy ra và cả kho từ file | [Test](../../tests/test_e2e_pipeline.py), [kết quả](../proof/phase-1/member-6/checks.txt) | Đạt. |
+| Chạy cùng seed và đầu vào | So sánh byte JSONL và file kho sau hai lần chạy | [Ca chạy và cách tái tạo](../proof/phase-1/member-6/README.md) | Đạt. |
+| Luồng sáng đến tối, khách tự đến và trả tiền | `Pipeline.test_harvest_to_paid_order` qua hai tiến trình headless | [Quán tích hợp](../proof/phase-1/member-6/quan_e2e_run.jsonl), [Phase 4](phase-4.md) | Đạt trên bản ghép TV4/TV5 để kiểm thử. |

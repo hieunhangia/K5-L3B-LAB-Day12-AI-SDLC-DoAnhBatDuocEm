@@ -1,0 +1,31 @@
+{
+  "gather": {
+    "player": {
+      "pos": [
+        7.0,
+        0
+      ]
+    },
+    "nodes": [
+      {
+        "id": "N1",
+        "kind": "bong_dien_dien",
+        "pos": [
+          7.0,
+          0
+        ]
+      }
+    ],
+    "fish": [
+      {
+        "id": "F1",
+        "kind": "ca_linh",
+        "pos": [
+          7.0,
+          1.5
+        ]
+      }
+    ],
+    "time_left_ticks": 31
+  }
+}

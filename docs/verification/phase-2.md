@@ -22,3 +22,7 @@ Get-FileHash "$env:TEMP/chonoi-tv4-quan.jsonl" -Algorithm SHA256
 Suite tổng trên Windows dùng `PYTHONPATH='tests;.'`, chế độ UTF-8 và launcher `python3.exe` tạm cho lệnh headless trong contract. Trên Bash dùng `PYTHONPATH=tests:. python3 -m unittest discover -s tests -v`.
 
 Kết quả này áp dụng cho lát TV4. Việc xác nhận Phase 2 và gắn tag theo quy trình nhóm diễn ra sau khi tích hợp phần Phase 1 và đối chiếu các câu hỏi trong [nhật ký PO](../clarify.md).
+
+## Kiểm chứng tích hợp của TV6
+
+Mười test khách hàng qua khi ghép mã TV4 với TV5. Fixture toàn trình nhận khách ở tick 120 và thanh toán ở tick 1462. [Kết quả](../proof/phase-1/member-6/checks.txt), [JSONL](../proof/phase-1/member-6/quan_e2e_run.jsonl).

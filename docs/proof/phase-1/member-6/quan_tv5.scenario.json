@@ -1,0 +1,25 @@
+{
+  "quan": {
+    "player": {
+      "pos": [
+        2,
+        8
+      ]
+    },
+    "time_left_ticks": 1463,
+    "random_customers": false,
+    "customers": [
+      {
+        "id": "C1",
+        "table_id": "T1",
+        "state": "waiting",
+        "dish": "lau_ca_linh_dien_dien",
+        "patience_ticks": 3600,
+        "reserved": {
+          "ca_linh": 3,
+          "bong_dien_dien": 1
+        }
+      }
+    ]
+  }
+}

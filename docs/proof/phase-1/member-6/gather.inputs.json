@@ -1,0 +1,24 @@
+{
+  "frames": [
+    {
+      "tick": 0,
+      "interact": true
+    },
+    {
+      "tick": 1,
+      "interact": false,
+      "move": [
+        0,
+        1
+      ]
+    },
+    {
+      "tick": 29,
+      "move": [
+        0,
+        0
+      ],
+      "catch": true
+    }
+  ]
+}
