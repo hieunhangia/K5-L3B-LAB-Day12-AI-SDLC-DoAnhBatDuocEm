@@ -27,6 +27,10 @@ Game cần chế độ **headless** theo Test Contract (`python3 -m chonoi.headl
 
 Ngoài phần đề yêu cầu, nhóm được **thêm** nhân vật, loài cá/cây, sinh vật, món, bản đồ, cơ chế, câu chuyện, đồ họa, âm nhạc… với ba điều kiện: **không phá phần cố định** (tắt ở headless), ghi mục **"Sáng tạo của nhóm"** trong README của nhóm, và **làm lõi đúng trước**.
 
+### Sáng tạo của nhóm
+
+Nhóm đang hoàn thiện vòng chơi lõi và chưa ghi nhận tính năng mở rộng đã tích hợp. Xem [trạng thái kiểm chứng](docs/verification/phase-4.md).
+
 ## Lịch 3 giờ
 
 | Mốc | Phase | Hạn tag |
