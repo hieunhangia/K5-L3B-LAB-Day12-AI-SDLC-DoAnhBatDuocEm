@@ -1,11 +1,10 @@
 """Nạp và kiểm scenario (Contract D). Trả về dict của đúng khối theo mode.
 
-KHUNG: kiểm cú pháp, id trùng, bộ đếm âm, khoang vượt sức chứa, trường lạ.
-TODO(nhóm): bổ sung kiểm mâu thuẫn mức luật mà nhóm cần (khách giữ chỗ quá kho, đơn assigned
-phải có đúng một món, khách eating thiếu giá/tip...) — xem PRD-0 mục D và 'Mâu thuẫn -> mã 2'.
+Kiểm cú pháp, miền giá trị và mâu thuẫn giữa món, trạng thái khách và kho.
 """
 
 import json
+from collections import Counter
 
 from .errors import BadInput
 from .inventory import KINDS_P1, validate_items
@@ -32,7 +31,7 @@ def _check_ids(name, arr):
         seen.add(e["id"])
 
 
-def load_scenario(path, mode: str, tuning: dict) -> dict:
+def load_scenario(path, mode: str, tuning: dict, *, inventory=None) -> dict:
     if path is None:
         return {}
     try:
@@ -59,7 +58,7 @@ def load_scenario(path, mode: str, tuning: dict) -> dict:
     if mode == "gather":
         _validate_gather(block, tuning)
     else:
-        _validate_quan(block, tuning)
+        _validate_quan(block, tuning, inventory)
     return block
 
 
@@ -140,12 +139,13 @@ def _validate_gather(b, tuning):
             raise BadInput(f"fish.{f['id']}.heading_deg phải là số")
 
 
-def _validate_quan(b, tuning):
+def _validate_quan(b, tuning, inventory):
     for arr in ("stoves", "tables", "customers"):
         if arr in b:
             _check_ids(arr, b[arr])
-    if "stock" in b:
-        validate_items(b["stock"])
+    if inventory is not None and "stock" in b:
+        raise BadInput("vừa có quan.stock vừa có --inventory")
+    stock = inventory if inventory is not None else validate_items(b.get("stock", {}))
     p = b.get("player", {})
     if not isinstance(p, dict) or set(p) - QUAN_PLAYER_KEYS:
         raise BadInput("quan.player chỉ có pos và vel")
@@ -161,3 +161,46 @@ def _validate_quan(b, tuning):
             raise BadInput(f"customers.{c['id']}: table_id phải là bàn có thật")
     if len(table_ids) != len(set(table_ids)):
         raise BadInput("hai khách cùng bàn")
+    menu = tuning["menu"]
+    _validate_dish("hand", b.get("hand"), menu)
+    for stove in b.get("stoves", []):
+        _validate_dish(f"stoves.{stove['id']}.dish", stove.get("dish"), menu)
+    reserved_total = Counter()
+    for c in b.get("customers", []):
+        name = f"customers.{c['id']}"
+        dishes = [c[key] for key in ("dish", "dish_id") if c.get(key) is not None]
+        for dish in dishes:
+            _validate_dish(f"{name}.dish", dish, menu)
+        if "dish" in c and c.get("dish_id") is not None and c["dish"] != c["dish_id"]:
+            raise BadInput(f"{name}: dish và dish_id mâu thuẫn")
+        state = c.get("state", "waiting")
+        for key in ("patience_ticks", "patience_ticks_left"):
+            if key in c:
+                _nonneg_int(f"{name}.{key}", c[key])
+        if "state" in c and state in ("assigned", "waiting", "eating") and not dishes:
+            raise BadInput(f"{name}: trạng thái {state} cần một món")
+        default_reserved = menu[dishes[0]]["recipe"] if dishes and state == "waiting" else {}
+        reserved = validate_items(c.get("reserved", default_reserved))
+        if reserved and (state not in ("assigned", "waiting") or not dishes
+                         or reserved != menu[dishes[0]]["recipe"]):
+            raise BadInput(f"{name}: nguyên liệu giữ chỗ phải khớp công thức của đơn đang chờ")
+        if state == "eating":
+            _nonneg_int(f"{name}.eat_ticks_left", c.get("eat_ticks_left"))
+            if c["eat_ticks_left"] == 0:
+                raise BadInput(f"{name}.eat_ticks_left phải > 0 khi đang ăn")
+            if "price" in c or "tip" in c:
+                for key in ("price", "tip"):
+                    _nonneg_int(f"{name}.{key}", c.get(key))
+            else:
+                # Fixture TV5 định giá theo menu và tính boa theo kiên nhẫn lúc phục vụ.
+                patience = c.get("patience_ticks", c.get("patience_ticks_left"))
+                _nonneg_int(f"{name}.patience_ticks (để tính price/tip)", patience)
+        reserved_total.update(reserved)
+    for kind, count in reserved_total.items():
+        if count > stock.get(kind, 0):
+            raise BadInput(f"quan: tổng giữ chỗ vượt kho cho {kind} ({count} > {stock.get(kind, 0)})")
+
+
+def _validate_dish(name, dish, menu):
+    if dish is not None and (not isinstance(dish, str) or dish not in menu):
+        raise BadInput(f"{name} phải là id món trong menu")

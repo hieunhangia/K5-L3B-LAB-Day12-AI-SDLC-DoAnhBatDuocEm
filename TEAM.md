@@ -9,7 +9,7 @@
 | Nguyễn Huy Tấn | Besoi2004 | sim/gather | Dev Gather Items | Thành viên 4 |
 | Vũ Văn Bình | hnib1908 | sim/quan | PO | Thành viên 5 |
 | Lê Tuấn Đạt | letuandat131 | sim/quan | Dev Lead Quán | Thành viên 6 |
-| [Chưa điền] | <github-handle-6> | qa/verification | QA Lead & Release | Thành viên 1 |
+| Đỗ Thanh Mai | Laurent2526 | qa/verification | QA Lead & Release | Thành viên 1 |
 
 **Vai quy trình:** PO (đầu mối hỏi giảng viên, giữ `docs/clarify.md`) · Integrator (giữ `docs/contracts/`, gắn tag) · QA lead · Scrum/Release. Có thể kiêm.
 
