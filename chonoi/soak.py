@@ -37,6 +37,7 @@ class _SoakBot:
     def __init__(self, tuning: dict):
         self.tuning = tuning
         self._last_interact = False
+        self._last_catch = False
         self._last_shop_done = False
 
     def next_input(self, snap: dict, phase: str) -> InputState:
@@ -45,26 +46,91 @@ class _SoakBot:
         buy = None
 
         if phase == "gather":
+            g = self.tuning["gather"]
             pos = snap["player"]["pos"]
-            ready_nodes = [n for n in snap["nodes"] if n["ready"]]
-            if snap["hold_count"] >= 2 or snap["time_left_ticks"] < 2000 or snap["player"]["hp"] <= 1 or not ready_nodes:
-                dock = self.tuning["gather"]["dock_pos"]
-                if math.dist(pos, dock) <= float(self.tuning["gather"]["dock_radius"]) - 0.1:
+            dock = g["dock_pos"]
+            free = int(snap.get("hold_capacity", g["hold_capacity"])) - int(snap["hold_count"])
+            plan_ing = snap.get("day_plan", {}).get("ingredients", {})
+            have = {}
+            for it in snap.get("hold", []):
+                k = it["kind"]
+                have[k] = have.get(k, 0) + 1
+
+            need_dock = (
+                free == 0
+                or snap["hold_count"] >= 6
+                or snap["time_left_ticks"] < 2400
+                or snap["player"]["hp"] <= 1
+            )
+            if pos[1] > 0.5 and snap["player"]["oxygen_ticks"] < 600:
+                move = _dir_toward(pos, (pos[0], 0.0))
+                self._last_interact = False
+                self._last_catch = False
+            elif need_dock:
+                if math.dist(pos, dock) <= float(g["dock_radius"]) - 0.1:
                     if not self._last_interact:
                         edges.add("interact")
                         self._last_interact = True
                 else:
                     move = _dir_toward(pos, dock)
                     self._last_interact = False
+                self._last_catch = False
             else:
-                target = ready_nodes[0]
-                if math.dist(pos, target["pos"]) <= float(self.tuning["gather"]["interact_radius"]) - 0.1:
-                    if not self._last_interact:
-                        edges.add("interact")
-                        self._last_interact = True
-                else:
-                    move = _dir_toward(pos, target["pos"])
+                ready_nodes = [n for n in snap["nodes"] if n["ready"]]
+                needed_nodes = [n for n in ready_nodes if plan_ing.get(n["kind"], 0) > have.get(n["kind"], 0)]
+                sung_nodes = [n for n in needed_nodes if n["kind"] == "bong_sung"]
+
+                fish_yield = g["fish_yield"]
+                needed_fish = [
+                    f for f in snap.get("fish", [])
+                    if plan_ing.get(f["kind"], 0) > have.get(f["kind"], 0)
+                    and free >= int(fish_yield[f["kind"]])
+                ]
+                loc_fish = [f for f in needed_fish if f["kind"] == "ca_loc"]
+
+                if sung_nodes and (pos[1] <= 1.0 or not needed_fish):
+                    target = min(sung_nodes, key=lambda n: math.dist(pos, n["pos"]))
+                    if math.dist(pos, target["pos"]) <= float(g["interact_radius"]) - 0.1:
+                        if not self._last_interact:
+                            edges.add("interact")
+                            self._last_interact = True
+                    else:
+                        move = _dir_toward(pos, target["pos"])
+                        self._last_interact = False
+                    self._last_catch = False
+                elif needed_fish:
+                    pool = loc_fish or needed_fish
+                    target = min(pool, key=lambda f: math.dist(pos, f["pos"]))
+                    if math.dist(pos, target["pos"]) <= float(g["catch_radius"]) - 0.1:
+                        if snap["player"].get("catch_cd_ticks", 0) == 0 and not self._last_catch:
+                            edges.add("catch")
+                            self._last_catch = True
+                        else:
+                            self._last_catch = False
+                    else:
+                        move = _dir_toward(pos, target["pos"])
+                        self._last_catch = False
                     self._last_interact = False
+                elif needed_nodes or ready_nodes:
+                    pool = needed_nodes or ready_nodes
+                    target = min(pool, key=lambda n: math.dist(pos, n["pos"]))
+                    if math.dist(pos, target["pos"]) <= float(g["interact_radius"]) - 0.1:
+                        if not self._last_interact:
+                            edges.add("interact")
+                            self._last_interact = True
+                    else:
+                        move = _dir_toward(pos, target["pos"])
+                        self._last_interact = False
+                    self._last_catch = False
+                else:
+                    if math.dist(pos, dock) <= float(g["dock_radius"]) - 0.1:
+                        if not self._last_interact:
+                            edges.add("interact")
+                            self._last_interact = True
+                    else:
+                        move = _dir_toward(pos, dock)
+                        self._last_interact = False
+                    self._last_catch = False
             self._last_shop_done = False
 
         elif phase == "quan":
@@ -101,6 +167,7 @@ class _SoakBot:
                     self._last_interact = False
             else:
                 self._last_interact = False
+            self._last_catch = False
             self._last_shop_done = False
 
         else:  # shop
@@ -113,14 +180,15 @@ class _SoakBot:
                 if nxt is not None and money >= int(nxt["price"]):
                     buy = kind
                     break
-            if not self._last_shop_done:
+            if buy is None and not self._last_shop_done:
                 edges.add("shop_done")
                 self._last_shop_done = True
             self._last_interact = False
+            self._last_catch = False
 
         held = {
             "interact": self._last_interact,
-            "catch": False,
+            "catch": self._last_catch,
             "pause": False,
             "shop_done": self._last_shop_done,
         }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] — Patch Release (tag `v1.0.1`)
+### Fixed
+- Bổ sung file [`LICENSE`](LICENSE) (MIT License) ở thư mục gốc repo và gắn liên kết từ [`CREDITS.md`](CREDITS.md); đính kèm gói `cho-noi-v1.0.0.zip` lên Release `v1.0.0` và `cho-noi-v1.0.1.zip` lên Release `v1.0.1`.
+- Nâng cấp `_SoakBot` trong [`chonoi/soak.py`](chonoi/soak.py) chủ động hái đúng nguyên liệu theo `day_plan`, bắt cá (`catch`), ngoi lấy oxy, cập bến, nấu/phục vụ ở quán và mua nâng cấp shop (chứng minh 10 ngày đạt `earned: 1035`, `reputation: 5.0`, `score: 1535`, `0 crashes` tại [`docs/proof/phase-4/soak.json`](docs/proof/phase-4/soak.json)).
+- Rút gọn [`docs/members/Besoi2004.md`](docs/members/Besoi2004.md) dưới `200` từ theo mọi cách tách token (`split`/`regex`) và bổ sung kiểm tra tự động trong [`tests/test_phase4_v13.py`](tests/test_phase4_v13.py).
+- Sửa nhãn dòng Lát 4 Quán (68 tests) của `letuandat131` từ `Phase 3` sang `Phase 1 (Lát 4)` trong [`docs/ai-usage-log.md`](docs/ai-usage-log.md) và [`docs/standup.md`](docs/standup.md).
+
 ## [1.0.0] — Phase 4 (`contract_version: "1.3"`, tags `phase-4`, `v1.0.0`)
 ### Release Notes
 - **Phát hành chính thức `v1.0.0`** của trò chơi *Quán Ăn Chợ Nổi* (6 thành viên nhóm `DoAnhBatDuocEm`): chạy hoàn toàn trên Python 3.12+ thư viện chuẩn từ clone sạch trong `<= 3` lệnh.

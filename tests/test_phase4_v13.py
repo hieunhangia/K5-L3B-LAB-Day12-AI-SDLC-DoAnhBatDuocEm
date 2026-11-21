@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import subprocess
 import unittest
 
@@ -54,6 +55,7 @@ class Phase4V13Tests(unittest.TestCase):
             self.assertEqual(d1["crashes"], 0)
             self.assertEqual(len(d1["results"]), 10)
             self.assertEqual(d1["results"], d2["results"])
+            self.assertGreater(d1["results"][-1]["earned"], 0, "soak bot should earn real money over 10 days")
 
     def test_leaderboard_recording_top10_tie_preservation_and_export(self):
         inp = frames(
@@ -128,14 +130,21 @@ class Phase4V13Tests(unittest.TestCase):
         self.assertIn("Tương phản cao", text)
         self.assertIn("Chơi", text)
 
-    def test_all_six_member_reflections_under_200_words(self):
+    def test_all_six_member_reflections_under_200_words_and_license(self):
+        self.assertTrue(os.path.exists(os.path.join(ROOT, "LICENSE")), "missing LICENSE")
         handles = ["hieunhangia", "Ducbaynao", "Besoi2004", "hnib1908", "letuandat131", "Laurent2526"]
         for h in handles:
             p = os.path.join(ROOT, "docs", "members", f"{h}.md")
             self.assertTrue(os.path.exists(p), f"missing {p}")
             with open(p, encoding="utf-8") as f:
-                words = len(f.read().split())
-            self.assertLessEqual(words, 200, f"{h}.md has {words} > 200 words")
+                text = f.read()
+            words = len(text.split())
+            plain = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+            tokens_w = len(re.findall(r"\b\w+\b", plain))
+            tokens_raw = len(re.findall(r"[^\W_]+", plain))
+            self.assertLessEqual(words, 200, f"{h}.md has {words} > 200 whitespace words")
+            self.assertLessEqual(tokens_w, 200, f"{h}.md has {tokens_w} > 200 word tokens")
+            self.assertLessEqual(tokens_raw, 200, f"{h}.md has {tokens_raw} > 200 raw tokens")
 
 
 if __name__ == "__main__":
