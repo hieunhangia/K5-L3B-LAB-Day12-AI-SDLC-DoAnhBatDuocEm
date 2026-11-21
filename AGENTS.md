@@ -3,6 +3,7 @@
 > Cập nhật file này qua các phase (lịch sử git phải cho thấy điều đó). Ngắn gọn, có lệnh chạy thật.
 
 ## Lệnh
+- Phase 4 (contract v1.3): `python -m chonoi.bench --seed 42 --duration 30 --out bench.json` và `python -m chonoi.soak --seed 7 --days 10 --out soak.json`. Bằng chứng ở `docs/proof/phase-4/`.
 - Kiểm chứng TV2 Gather v1.1: `python docs/proof/phase-2/member-2/verify.py` (suite, headless, tất định; ghi riêng trạng thái TEAM).
 - Test: `PYTHONPATH=tests:. python3 -m unittest discover -s tests -v`
 - Headless: `python3 -m chonoi.headless --mode gather|quan --seed 1 --ticks 600 --out out.jsonl`

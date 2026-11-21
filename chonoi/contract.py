@@ -30,6 +30,11 @@ def load_contract(path=DEFAULT_PATH) -> dict:
     ext = c.get("extensions", [])
     if not isinstance(ext, list) or any(not isinstance(x, str) for x in ext):
         raise BadInput("extensions phải là mảng chuỗi")
+    if c.get("contract_version") == "1.3":
+        for cmd_key in ("bench_cmd", "soak_cmd"):
+            v = c.get(cmd_key)
+            if not isinstance(v, str) or not v.strip():
+                raise BadInput(f"thiếu hoặc sai {cmd_key} ở contract v1.3")
     validate_tuning(c.get("tuning"), extensions=ext)
     return c
 

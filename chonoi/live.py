@@ -25,6 +25,7 @@ from .contract import load_contract
 from .errors import BadInput
 from .inputs import LiveInputs
 from .inventory import read_inventory
+from .leaderboard import export_leaderboard
 from .runner import Session
 from .scenario import load_scenario
 
@@ -221,17 +222,22 @@ class LiveServer:
 
 
 def main(argv=None) -> int:
-    p = argparse.ArgumentParser(prog="chonoi.live", description="Chơi trực tiếp trên trình duyệt (v1.1).")
-    p.add_argument("--mode", required=True, choices=["gather", "quan", "day"])
-    p.add_argument("--days", type=int, default=1)
+    p = argparse.ArgumentParser(prog="chonoi.live", description="Chơi trực tiếp trên trình duyệt (v1.3).")
+    p.add_argument("--mode", default="day", choices=["gather", "quan", "day"])
+    p.add_argument("--days", type=int, default=5)
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--port", type=int, default=8000, help="0 = cổng ngẫu nhiên")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--scenario")
     p.add_argument("--inventory", help="chỉ với quan: nạp kho từ file")
     p.add_argument("--inventory-out", dest="inventory_out", help="chỉ với gather: ghi kho khi kết thúc buổi")
+    p.add_argument("--leaderboard", default=None)
+    p.add_argument("--export-leaderboard", dest="export_leaderboard", default=None)
     a = p.parse_args(argv)
     try:
+        if a.export_leaderboard is not None:
+            export_leaderboard(a.export_leaderboard, store_path=a.leaderboard)
+            return 0
         if a.inventory and a.mode != "quan":
             raise BadInput("--inventory chỉ dùng với quan")
         if a.inventory_out and a.mode != "gather":

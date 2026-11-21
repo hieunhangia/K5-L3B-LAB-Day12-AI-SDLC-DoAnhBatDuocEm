@@ -1,12 +1,15 @@
-"""Đầu vào headless (Contract B / v1.1): hỗ trợ --mode gather|quan|day và --days 1..5."""
+"""Đầu vào headless (Contract B / v1.3): hỗ trợ --mode gather|quan|day, --days 1..5 và --leaderboard."""
 
 import argparse
+import math
+import os
 import sys
 
 from .contract import load_contract
 from .errors import BadInput
 from .inputs import BUTTONS_V11, load_frames
 from .inventory import read_inventory
+from .leaderboard import record_entry, validate_player_name
 from .runner import run
 from .scenario import load_scenario
 
@@ -45,6 +48,8 @@ def main(argv=None) -> int:
     p.add_argument("--inventory-out", dest="inventory_out")
     p.add_argument("--days", type=_int_exact, default=None)
     p.add_argument("--snapshot-every", dest="snapshot_every", type=_int_exact, default=10)
+    p.add_argument("--leaderboard", default=None)
+    p.add_argument("--player-name", dest="player_name", default=None)
     a = p.parse_args(argv)
     try:
         _exact_json_int(a.seed)
@@ -61,10 +66,20 @@ def main(argv=None) -> int:
         days = 1 if a.days is None else a.days
         if not (1 <= days <= 5):
             raise BadInput("--days phải là số nguyên từ 1 đến 5")
+
+        if (a.leaderboard is None) != (a.player_name is None):
+            raise BadInput("cần truyền đủ cả --leaderboard và --player-name")
+        if a.leaderboard is not None:
+            if a.mode != "day":
+                raise BadInput("--leaderboard chỉ dùng với --mode day")
+            validate_player_name(a.player_name)
+
         outs = [x for x in (a.out, a.inventory_out) if x]
         ins = [x for x in (a.scenario, a.inputs, a.inventory) if x]
         if len(set(outs)) != len(outs) or set(outs) & set(ins):
             raise BadInput("đường dẫn ghi phải tách biệt nhau và tách biệt đầu vào")
+        if a.leaderboard and os.path.abspath(a.leaderboard) in {os.path.abspath(x) for x in outs + ins}:
+            raise BadInput("đường dẫn --leaderboard phải tách khỏi đầu vào/ra JSONL")
 
         tuning = load_contract()["tuning"]
         scenario = load_scenario(a.scenario, a.mode, tuning)
@@ -73,7 +88,7 @@ def main(argv=None) -> int:
         if inventory is not None and "stock" in scenario:
             raise BadInput("vừa có quan.stock vừa có --inventory")
 
-        run(
+        sim = run(
             a.mode,
             tuning,
             scenario,
@@ -86,6 +101,19 @@ def main(argv=None) -> int:
             inventory_out=a.inventory_out,
             days=days,
         )
+
+        if (
+            a.leaderboard is not None
+            and a.mode == "day"
+            and days == 5
+            and a.scenario is None
+            and sim.done
+            and sim.reason == "days_complete"
+            and getattr(sim, "days_completed", 0) == 5
+        ):
+            mult = tuning["score"]["reputation_multiplier"]
+            score = int(sim.earned + mult * math.floor(sim.reputation))
+            record_entry(a.leaderboard, a.player_name, score, 5, a.seed)
     except BadInput as e:
         sys.stderr.write(f"đầu vào sai: {e}\n")
         return 2
